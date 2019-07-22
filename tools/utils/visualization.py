@@ -11,10 +11,19 @@ def stgcn_visualize(pose,
                     height=1080):
 
     _, T, V, M = pose.shape
-    T = len(video)
+    print(' _, T,'+str(T)+' V,'+str(V)+' M'+str(M))
     pos_track = [None] * M
+    cap = cv2.VideoCapture(video)
+    print('video='+video)
+    if not cap.isOpened():
+        print("could not open :{}".format(video))
+        return
+
+    #T = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     for t in range(T):
-        frame = video[t]
+        ret,frame = cap.read()
+        if ret != True:
+            return
 
         # image resize
         H, W, c = frame.shape
@@ -60,8 +69,8 @@ def stgcn_visualize(pose,
                 new_y = int(pos_track[m][1] + (pos[1] - pos_track[m][1]) * 0.2)
                 pos_track[m] = (new_x, new_y)
             cv2.putText(text, body_label, pos_track[m],
-                        cv2.FONT_HERSHEY_TRIPLEX, 0.5 * scale_factor,
-                        (255, 255, 255))
+                        cv2.FONT_HERSHEY_TRIPLEX, 0.3 * scale_factor,
+                        (2, 255, 255))
 
         # generate mask
         mask = frame * 0
@@ -83,8 +92,8 @@ def stgcn_visualize(pose,
                 else:
                     x = int((x + 0.5) * W)
                     y = int((y + 0.5) * H)
-                cv2.circle(mask, (x, y), 0, (255, 255, 255),
-                           int(np.ceil(f[v]**0.5 * 8 * scale_factor)))
+                cv2.circle(mask, (x, y), 0, (255, 2, 2),
+                           int(np.ceil(f[v]**0.2 * 8 * scale_factor)))
         blurred_mask = cv2.blur(mask, (12, 12))
 
         skeleton_result = blurred_mask.astype(float) * 0.75
@@ -106,18 +115,26 @@ def stgcn_visualize(pose,
         text_3 = cv2.imread('./resource/demo_asset/attention+prediction.png', cv2.IMREAD_UNCHANGED)
         text_4 = cv2.imread('./resource/demo_asset/attention+rgb.png', cv2.IMREAD_UNCHANGED)
         
-        blend(frame, text_1)
-        blend(skeleton, text_2)
-        blend(skeleton_result, text_3)
-        blend(rgb_result, text_4)
+        #blend(frame, text_1)
+        #blend(skeleton, text_2)
+        #blend(skeleton_result, text_3)
+        #blend(rgb_result, text_4)
 
         if label is not None:
             label_name = 'voting result: ' + label
-            put_text(skeleton_result, label_name, (0.1, 0.5))
+            #put_text(skeleton_result, label_name, (0.1, 0.5))
 
-        img0 = np.concatenate((frame, skeleton), axis=1)
-        img1 = np.concatenate((skeleton_result, rgb_result), axis=1)
-        img = np.concatenate((img0, img1), axis=0)
+        #img0 = np.concatenate((frame, skeleton), axis=1)
+        #img1 = np.concatenate((skeleton_result, rgb_result), axis=1)
+        #img = np.concatenate((img0, img1), axis=0)
+        
+        if(W>H):
+            # vertically
+            img = np.concatenate((skeleton_result,frame), axis=0)
+        else:
+            # horizontally
+            img = np.concatenate((skeleton_result, frame), axis=1)
+        
 
         yield img
 

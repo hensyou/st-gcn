@@ -213,7 +213,7 @@ def save_to_pro_db(video_name='10048_1'):
     ac_col = pd.read_sql(sql, con=db)
 
 
-    sql = 'select * from (select LABEL_NAME,count(*) as number from EG_CLEAN_TMP where VIDEO_NAME ="{}" and PERSON_NUMBER=0 group by LABEL_NAME order by count(*) desc ) t where number >50 '.format(video_name)
+    sql = 'select * from (select LABEL_NAME,count(*) as number from EG_CLEAN_TMP where VIDEO_NAME ="{}" and PERSON_NUMBER=0  and LABEL_NAME <> \'\' group by LABEL_NAME order by count(*) desc ) t where number >50 '.format(video_name)
     ac_g = pd.read_sql(sql, con=db)
 
     sql = 'select id,action_name from ref_action_type'
