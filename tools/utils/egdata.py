@@ -183,9 +183,15 @@ def frames_to_time(frames):
     ret = '{:0>2}:{:0>2}:{:0>2}'.format(hours,minutes,seconds)
 
     return ret
+    
 def action_id (ac_t,action_name):
-    actionId = ac_t.loc[ac_t['action_name'] == action_name]
-    actionId = actionId.iloc[0][0]
+    try:
+        actionId = ac_t.loc[ac_t['action_name'] == action_name]
+        actionId = actionId.iloc[0][0]
+    except IndexError as ie:
+        print(action_name+' is missing in  ref_action_type ')
+        print(str(ie))
+        raise 
     return actionId
 
 def get_assement_id (video_name):
