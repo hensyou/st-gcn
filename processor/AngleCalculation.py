@@ -81,7 +81,7 @@ class AngleCalculation:
 
 
         print(self._column['PERSON_NUMBER'])
-        print('Read Successfully!')
+        print('Read '+table_name+' Successfully!')
         print(self._framenumber)
         print(self._column['LABEL_NAME'])
 
@@ -94,7 +94,7 @@ class AngleCalculation:
         vid = skvideo.io.vread(fname=videopath)
         for i in range(len(vid)):
             skvideo.io.vwrite("%s/frame%05d.jpg" % (writeimagepath, i), vid[i])
-            print("read successfully!")
+            print('AngleCalculation.VideoCap() write frame #' +i+ ' successfully!')
 
     def Getfps(self,videopath):
         vidcap = cv2.VideoCapture(videopath)
@@ -2776,6 +2776,7 @@ class AngleCalculation:
     ################################################################################################################
 
     def readimage(self, datapath, framenum=0):
+        print('readimage() from '+datapath )
         self._column['image'] = []
         if framenum == 0:
             i = 0
@@ -2786,7 +2787,7 @@ class AngleCalculation:
         else:
             img = cv2.imread(r'%s/frame%05d.jpg' % (datapath, framenum))
             self._column['image'].append(img)
-
+        print('readimage() finished ')
         return self._column['image']
 
     def drawskeleton(self, framenum=0, color=(255, 0, 0), thickness=3):
@@ -4096,6 +4097,7 @@ class AngleCalculation:
 
     def ImagetoVideo(self, output, imgext='jpg', fps=10.0):
         import skvideo.io
+        print("AngleCalculation.ImagetoVideo to output {}".format(output))
         writer = skvideo.io.FFmpegWriter(output, inputdict={
             '-r': '10'}, outputdict={'-b': '300000000'})
         for img in self._column['image']:
@@ -4139,6 +4141,8 @@ class AngleCalculation:
         print("The output video is {}".format(output))
 
     def outputimage(self,dirpath):
+
+        print("AngleCalculation.outputimage to {}".format(dirpath))
         flag=0
         x=[]
         counter1=0
@@ -4168,8 +4172,9 @@ class AngleCalculation:
 
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
-            
+        print('outputimage.printing array x:')
         print(x)
+        print('outputimage.printing len of x:')
         print(len(x))
         u=3
         flag2=0
@@ -4180,6 +4185,7 @@ class AngleCalculation:
             
         for i in range(0,u):
             cv2.imwrite("%s/image%d.jpg"%(dirpath,i),x[i])
+        print('outputimage()finished.')
 
 
     def neckstatus(self):
