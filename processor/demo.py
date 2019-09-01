@@ -23,7 +23,7 @@ class Demo(IO):
         print("load_to_db")
         import pymysql as mysql
         import cv2
-        db = mysql.connect("192.168.2.106","eguser@192.168.5.19","Fred!*!@!&123","mydb")
+        db = mysql.connect("127.0.0.1","eguser@192.168.5.19","Fred!*!@!&123","mydb")
         cursor = db.cursor()
         sql = "delete from EG_CLEAN_TMP where VIDEO_NAME = '"+video+"'"
         cursor.execute(sql)
@@ -44,14 +44,13 @@ class Demo(IO):
 
         for i_loop in range(0,length,1):
             if i_loop < 10:
-                filename = '/home/fred/dev/project/st-gcn/data/openpose_estimation/snippets/'+video+'/'+video+'_00000000000'+str(i_loop)+'_keypoints.json'
+                filename = '/home/ergoadm/dev/project/st-gcn/data/openpose_estimation/snippets/'+video+'/'+video+'_00000000000'+str(i_loop)+'_keypoints.json'
             elif i_loop < 100:
-                filename = '/home/fred/dev/project/st-gcn/data/openpose_estimation/snippets/'+video+'/'+video+'_0000000000' + str(i_loop) + '_keypoints.json'
+                filename = '/home/ergoadm/dev/project/st-gcn/data/openpose_estimation/snippets/'+video+'/'+video+'_0000000000' + str(i_loop) + '_keypoints.json'
             elif i_loop < 1000:
-                filename = '/home/fred/dev/project/st-gcn/data/openpose_estimation/snippets/'+video+'/'+video+'_000000000' + str(i_loop) + '_keypoints.json'
+                filename = '/home/ergoadm/dev/project/st-gcn/data/openpose_estimation/snippets/'+video+'/'+video+'_000000000' + str(i_loop) + '_keypoints.json'
             elif i_loop < 10000:
-                filename = '/home/fred/dev/project/st-gcn/data/openpose_estimation/snippets/'+video+'/'+video+'_00000000' + str(i_loop) + '_keypoints.json'
-
+                filename = '/home/ergoadm/dev/project/st-gcn/data/openpose_estimation/snippets/'+video+'/'+video+'_00000000' + str(i_loop) + '_keypoints.json'
             import os.path
             if os.path.isfile(filename) != True :
                 sql = "INSERT INTO EG_CLEAN_TMP(VIDEO_NAME,FRAME_NUMBER,PERSON_COUNT,PERSON_NUMBER) VALUES ('"+video+"',"+str(i_loop)+",0,0)"
@@ -117,8 +116,10 @@ class Demo(IO):
 
     def update_label_to_db(self,video,label_name_sequence):
         import pymysql as mysql
-        db = mysql.connect("192.168.2.106","eguser@192.168.5.19","Fred!*!@!&123","mydb")
+        db = mysql.connect("127.0.0.1","eguser@192.168.5.19","Fred!*!@!&123","mydb")
         cursor = db.cursor()
+        print('update_label_to_db')
+
         for n in range(0,len(label_name_sequence),1):
             sql = 'update EG_CLEAN_TMP set LABEL_NAME = "{}" where VIDEO_NAME = "{}" and PERSON_NUMBER=0 and FRAME_NUMBER = {}'.format(label_name_sequence[n][0],video,str(4*n))
             cursor.execute(sql)
@@ -136,17 +137,20 @@ class Demo(IO):
             cursor.execute(sql)
             sql = 'update EG_CLEAN_TMP set LABEL_NAME = "{}" where VIDEO_NAME = "{}" and PERSON_NUMBER=1 and FRAME_NUMBER = {}'.format(label_name_sequence[n][1],video,str(4*n+3))
             cursor.execute(sql)
+            print('sql:'+sql)
+        print('committing')
         db.commit()
-
+        print('committed')
 
     def update_video_state(self,video_name,state):
         import pymysql as mysql
-        db = mysql.connect("192.168.2.106","eguser@192.168.5.19","Fred!*!@!&123","ergo_raw")
+        db = mysql.connect("127.0.0.1","eguser@192.168.5.19","Fred!*!@!&123","ergo_raw")
         cursor = db.cursor()
-        sql = 'update data_video set video_status = {},processed_file_name = "V_{}",processed_file_path = "/home/fred/dev/project/dataServer/downloads/{}" where video_name like "{}%"'.format(state,video_name, video_name.split('.')[0], video_name.split('.')[0]) 
+        sql = 'update data_video set video_status = {},processed_file_name = "V_{}",processed_file_path = "/home/ergoadm/dev/project/dataServer/downloads/{}" where video_name like "{}%"'.format(state,video_name, video_name.split('.')[0], video_name.split('.')[0]) 
         print('update_video_state')
         print(sql)
         try:
+        
             cursor.execute(sql)
             db.commit()
         except:
@@ -176,10 +180,11 @@ class Demo(IO):
             video=self.arg.video,
             write_json=output_snippets_dir,
             display=0,
-            model_folder='/home/fred/dev/project/openpose/models',
+            model_folder='/home/ergoadm/dev/project/openpose/models',
             render_pose=0,
             model_pose='COCO')
         command_line = openpose + ' --hand '
+        #command_line = openpose + ' '
         command_line += ' '.join(['--{} {}'.format(k, v) for k, v in openpose_args.items()])
         shutil.rmtree(output_snippets_dir, ignore_errors=True)
         os.makedirs(output_snippets_dir)
@@ -211,7 +216,8 @@ class Demo(IO):
         print('start parsing video')
         pose, _ = utils.video.video_info_parsing(video_info)
         print('parsing result')
-        print(pose)
+        print('pose shape:')
+        print(pose.shape)
         data = torch.from_numpy(pose)
         data = data.unsqueeze(0)
         data = data.float().to(self.dev).detach()
@@ -238,6 +244,7 @@ class Demo(IO):
         label_sequence = output.sum(dim=2).argmax(dim=0)
         label_name_sequence = [[label_name[p] for p in l] for l in label_sequence]
         print('len='+str(len(label_name_sequence)))
+        print('label_name_sequence:')
         print(label_name_sequence)
         self.update_label_to_db(video_name,label_name_sequence)        
         edge = self.model.graph.edge

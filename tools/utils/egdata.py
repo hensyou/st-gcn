@@ -101,7 +101,7 @@ def adjustFrame(first_frame,second_frame):
 def adjust(video_name): 
     import pymysql as mysql
  
-    db = mysql.connect("192.168.2.106","eguser@192.168.5.19","Fred!*!@!&123","mydb")
+    db = mysql.connect("127.0.0.1","eguser@192.168.5.19","Fred!*!@!&123","mydb")
     cursor = db.cursor()
 
     sql='SELECT * FROM EG_CLEAN_TMP WHERE VIDEO_NAME="{}" ORDER BY FRAME_NUMBER asc '.format(video_name)
@@ -136,7 +136,7 @@ def json_pack_from_db(snippets_dir, video_name, frame_width, frame_height, label
 
     import pymysql as mysql
 
-    db = mysql.connect("192.168.2.106","eguser@192.168.5.19","Fred!*!@!&123","mydb")
+    db = mysql.connect("127.0.0.1","eguser@192.168.5.19","Fred!*!@!&123","mydb")
     cursor = db.cursor()
 
     sql='SELECT * FROM EG_CLEAN_TMP WHERE VIDEO_NAME="{}" ORDER BY FRAME_NUMBER asc '.format(video_name)
@@ -196,7 +196,7 @@ def action_id (ac_t,action_name):
 
 def get_assement_id (video_name):
     import pymysql as mysql
-    db = mysql.connect("192.168.2.106", "eguser@192.168.5.19", "Fred!*!@!&123", "ergo_raw")
+    db = mysql.connect("127.0.0.1", "eguser@192.168.5.19", "Fred!*!@!&123", "ergo_raw")
     sql = 'select assessment_id,video_name from data_video where video_name like "%{}%"'.format(video_name.split('.')[0])
     assid_col = pd.read_sql(sql, con=db)
     assid = assid_col.iloc[0][0]
@@ -208,19 +208,27 @@ def save_to_pro_db(video_name='10048_1'):
     import pymysql as mysql
     import uuid
     assessment_id = get_assement_id(video_name)
+    
+    print('egdata.save_to_pro_db')
+    
 
     video_name = video_name.split('.')[0]
-    save_db = mysql.connect("192.168.2.106", "eguser@192.168.5.19", "Fred!*!@!&123", "ergo_raw")
+    save_db = mysql.connect("127.0.0.1", "eguser@192.168.5.19", "Fred!*!@!&123", "ergo_raw")
     cursor = save_db.cursor()
 
-    db = mysql.connect("192.168.2.106", "eguser@192.168.5.19", "Fred!*!@!&123", "mydb")
+    db = mysql.connect("127.0.0.1", "eguser@192.168.5.19", "Fred!*!@!&123", "mydb")
 
     sql = 'select LABEL_NAME,FRAME_NUMBER from EG_CLEAN_TMP where VIDEO_NAME ="{}" and PERSON_NUMBER=0 order by FRAME_NUMBER'.format(video_name)
     ac_col = pd.read_sql(sql, con=db)
+    print(sql)
+    print(ac_col.head(20))
 
 
-    sql = 'select * from (select LABEL_NAME,count(*) as number from EG_CLEAN_TMP where VIDEO_NAME ="{}" and PERSON_NUMBER=0  and LABEL_NAME <> \'\' group by LABEL_NAME order by count(*) desc ) t where number >50 '.format(video_name)
+    sql = 'select * from (select LABEL_NAME,count(*) as number from EG_CLEAN_TMP where VIDEO_NAME ="{}" and PERSON_NUMBER=0 and LABEL_NAME is not null group by LABEL_NAME order by count(*) desc ) t where number >50 '.format(video_name)
     ac_g = pd.read_sql(sql, con=db)
+    print(sql)
+    print(ac_g.head(20))
+    
 
     sql = 'select id,action_name from ref_action_type'
     ac_t = pd.read_sql(sql,save_db)
