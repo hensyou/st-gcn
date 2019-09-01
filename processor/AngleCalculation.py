@@ -24,7 +24,7 @@ class AngleCalculation:
         self._orientation = []
         for h in field_names:
             self._column[h] = []
-
+        '''
         for row in cur.fetchall():
             if row[4] == person_number:
                 for h, v in zip(field_names, row):
@@ -35,9 +35,46 @@ class AngleCalculation:
                             v = 0
                         v = float(v)
                     self._column[h].append(v)
+        '''
+
+        counter=0
+
+        for row in cur.fetchall():
+            #print(row)
+            if int(row[2]) == counter:
+                print('row',row[2])
+                print('counter',counter)
+                if row[4] == person_number:
+                    print(row[2])
+                    counter=counter+1
+                    for h, v in zip(field_names, row):
+                        if h in ['VIDEO_NAME', 'LABEL_NAME']:
+                            v = str(v)
+                        else:
+                            if v is None:
+                                v = 0
+                            v = float(v)
+                        self._column[h].append(v)
+                else:
+                    continue
+            
+
+            else:
+                while counter < int(row[2]):
+                    for h in field_names:
+                        if h in ['VIDEO_NAME', 'LABEL_NAME']:
+                            v = ""
+                        else:
+                            v = 0
+                        self._column[h].append(v)
+                    counter = counter + 1
+
+            
+            
         self._framenumber = len(self._column[field_names[0]])
         self._column['CTR_X'] = []
         self._column['CTR_Y'] = []
+        print("the data has been imported to python successfully!")
 
         for i in range(self._framenumber):
             if self._column['B_8_X'][i] !=0 and self._column['B_8_Y'][i] !=0:
@@ -46,6 +83,7 @@ class AngleCalculation:
             else:
                 self._column['CTR_X'].append((self._column['B_2_X'][i] + self._column['B_5_X'][i]) / 2)
                 self._column['CTR_Y'].append((self._column['B_2_Y'][i] + self._column['B_5_Y'][i]) / 2)
+
             ##########################To Manipulate Null Value Point###########################################
             if self._column['B_6_X'][i] == 0:
                 self._column['B_6_X'][i] = self._column['B_3_X'][i]
@@ -79,11 +117,10 @@ class AngleCalculation:
             else:
                 self._orientation.append('left')
 
-
         print(self._column['PERSON_NUMBER'])
-        print('Read '+table_name+' Successfully!')
+        print('Read Successfully!')
         print(self._framenumber)
-        print(self._column['LABEL_NAME'])
+        #print(self._column['LABEL_NAME'])
 
     def ShowOrientation(self):
         orientation = self._orientation
@@ -94,13 +131,7 @@ class AngleCalculation:
         vid = skvideo.io.vread(fname=videopath)
         for i in range(len(vid)):
             skvideo.io.vwrite("%s/frame%05d.jpg" % (writeimagepath, i), vid[i])
-            print('AngleCalculation.VideoCap() write frame #' +i+ ' successfully!')
-
-    def Getfps(self,videopath):
-        vidcap = cv2.VideoCapture(videopath)
-        framerate=round(vidcap.get(cv2.CAP_PROP_FPS),0)
-
-        return framerate
+            print("read successfully!")
 
     def VideoCapbycv(self, videopath, writeimagepath):
 
@@ -155,9 +186,6 @@ class AngleCalculation:
                 if int((np.linalg.norm(ba) * np.linalg.norm(bc))) != 0:
                     cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
                     neckangle = np.degrees(np.arccos(cosine_angle))
-                    if self._orientation[i] == 'front' or self._orientation[i] == 'back':
-                        if neckangle >= 20:
-                            neckangle = neckangle/180 + 19
                     NeckAngle.append(neckangle)
                 else:
                     NeckAngle.append(0)
@@ -179,9 +207,6 @@ class AngleCalculation:
             if int((np.linalg.norm(ba) * np.linalg.norm(bc))) != 0:
                 cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
                 neckangle = np.degrees(np.arccos(cosine_angle))
-                if self._orientation[framenum]=='front' or self._orientation[framenum]=='back':
-                    if neckangle >= 20:
-                            neckangle = neckangle/180 + 19
                 NeckAngle.append(neckangle)
             else:
                 NeckAngle.append(0)
@@ -197,7 +222,7 @@ class AngleCalculation:
             while i < self._framenumber:
                 a = np.array((self._column['B_6_X'][i], self._column['B_6_Y'][i]))
                 b = np.array((self._column['B_5_X'][i], self._column['B_5_Y'][i]))
-                c = np.array((self._column['B_5_X'][i], self._column['B_5_Y'][i]+100))
+                c = np.array((self._column['B_11_X'][i], self._column['B_11_Y'][i]))
 
                 ba = a - b
                 bc = c - b
@@ -213,7 +238,7 @@ class AngleCalculation:
         else:
             a = np.array((self._column['B_6_X'][framenum], self._column['B_6_Y'][framenum]))
             b = np.array((self._column['B_5_X'][framenum], self._column['B_5_Y'][framenum]))
-            c = np.array((self._column['B_5_X'][framenum], self._column['B_5_Y'][framenum]+100))
+            c = np.array((self._column['B_11_X'][framenum], self._column['B_11_Y'][framenum]))
 
             ba = a - b
             bc = c - b
@@ -235,7 +260,7 @@ class AngleCalculation:
             while i < self._framenumber:
                 a = np.array((self._column['B_3_X'][i], self._column['B_3_Y'][i]))
                 b = np.array((self._column['B_2_X'][i], self._column['B_2_Y'][i]))
-                c = np.array((self._column['B_3_X'][i], self._column['B_3_Y'][i]+100))
+                c = np.array((self._column['B_8_X'][i], self._column['B_8_Y'][i]))
 
                 ba = a - b
                 bc = c - b
@@ -251,7 +276,7 @@ class AngleCalculation:
         else:
             a = np.array((self._column['B_3_X'][framenum], self._column['B_3_Y'][framenum]))
             b = np.array((self._column['B_2_X'][framenum], self._column['B_2_Y'][framenum]))
-            c = np.array((self._column['B_3_X'][framenum], self._column['B_3_Y'][framenum]+100))
+            c = np.array((self._column['B_8_X'][framenum], self._column['B_8_Y'][framenum]))
 
             ba = a - b
             bc = c - b
@@ -2776,7 +2801,6 @@ class AngleCalculation:
     ################################################################################################################
 
     def readimage(self, datapath, framenum=0):
-        print('readimage() from '+datapath )
         self._column['image'] = []
         if framenum == 0:
             i = 0
@@ -2787,33 +2811,62 @@ class AngleCalculation:
         else:
             img = cv2.imread(r'%s/frame%05d.jpg' % (datapath, framenum))
             self._column['image'].append(img)
-        print('readimage() finished ')
+
         return self._column['image']
 
-    def drawskeleton(self, framenum=0, color=(255, 0, 0), thickness=3):
+    def drawskeleton(self, filepath, framenum=0, color=(255, 0, 0), thickness=3):
+        vid = cv2.VideoCapture(filepath)
+        height = vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        width = vid.get(cv2.CAP_PROP_FRAME_WIDTH)
+        print('height is',height)
+        print(width)
+        reso = [height, width]
         if framenum == 0 and self._column['image'] != []:
             i = 0
             while i < self._framenumber:
                 img = self._column['image'][i]
+                
+                if height>width:
 
-                pose0 = (int(self._column['B_0_X'][i]), int(self._column['B_0_Y'][i]))
-                pose1 = (int(self._column['B_1_X'][i]), int(self._column['B_1_Y'][i]))
-                pose2 = (int(self._column['B_2_X'][i]), int(self._column['B_2_Y'][i]))
-                pose3 = (int(self._column['B_3_X'][i]), int(self._column['B_3_Y'][i]))
-                pose4 = (int(self._column['B_4_X'][i]), int(self._column['B_4_Y'][i]))
-                pose5 = (int(self._column['B_5_X'][i]), int(self._column['B_5_Y'][i]))
-                pose6 = (int(self._column['B_6_X'][i]), int(self._column['B_6_Y'][i]))
-                pose7 = (int(self._column['B_7_X'][i]), int(self._column['B_7_Y'][i]))
-                pose8 = (int(self._column['B_8_X'][i]), int(self._column['B_8_Y'][i]))
-                pose9 = (int(self._column['B_9_X'][i]), int(self._column['B_9_Y'][i]))
-                pose10 = (int(self._column['B_10_X'][i]), int(self._column['B_10_Y'][i]))
-                pose11 = (int(self._column['B_11_X'][i]), int(self._column['B_11_Y'][i]))
-                pose12 = (int(self._column['B_12_X'][i]), int(self._column['B_12_Y'][i]))
-                pose13 = (int(self._column['B_13_X'][i]), int(self._column['B_13_Y'][i]))
-                pose14 = (int(self._column['B_14_X'][i]), int(self._column['B_14_Y'][i]))
-                pose15 = (int(self._column['B_15_X'][i]), int(self._column['B_15_Y'][i]))
-                pose16 = (int(self._column['B_16_X'][i]), int(self._column['B_16_Y'][i]))
-                pose17 = (int(self._column['B_17_X'][i]), int(self._column['B_17_Y'][i]))
+                    pose0 = (int(self._column['B_0_X'][i]), int(self._column['B_0_Y'][i]+height/2))
+                    pose1 = (int(self._column['B_1_X'][i]), int(self._column['B_1_Y'][i]+height/2))
+                    pose2 = (int(self._column['B_2_X'][i]), int(self._column['B_2_Y'][i]+height/2))
+                    pose3 = (int(self._column['B_3_X'][i]), int(self._column['B_3_Y'][i]+height/2))
+                    pose4 = (int(self._column['B_4_X'][i]), int(self._column['B_4_Y'][i]+height/2))
+                    pose5 = (int(self._column['B_5_X'][i]), int(self._column['B_5_Y'][i]+height/2))
+                    pose6 = (int(self._column['B_6_X'][i]), int(self._column['B_6_Y'][i]+height/2))
+                    pose7 = (int(self._column['B_7_X'][i]), int(self._column['B_7_Y'][i]+height/2))
+                    pose8 = (int(self._column['B_8_X'][i]), int(self._column['B_8_Y'][i]+height/2))
+                    pose9 = (int(self._column['B_9_X'][i]), int(self._column['B_9_Y'][i]+height/2))
+                    pose10 = (int(self._column['B_10_X'][i]), int(self._column['B_10_Y'][i]+height/2))
+                    pose11 = (int(self._column['B_11_X'][i]), int(self._column['B_11_Y'][i]+height/2))
+                    pose12 = (int(self._column['B_12_X'][i]), int(self._column['B_12_Y'][i]+height/2))
+                    pose13 = (int(self._column['B_13_X'][i]), int(self._column['B_13_Y'][i]+height/2))
+                    pose14 = (int(self._column['B_14_X'][i]), int(self._column['B_14_Y'][i]+height/2))
+                    pose15 = (int(self._column['B_15_X'][i]), int(self._column['B_15_Y'][i]+height/2))
+                    pose16 = (int(self._column['B_16_X'][i]), int(self._column['B_16_Y'][i]+height/2))
+                    pose17 = (int(self._column['B_17_X'][i]), int(self._column['B_17_Y'][i]+height/2))
+
+                else:
+
+                    pose0 = (int(self._column['B_0_X'][i]+width/2), int(self._column['B_0_Y'][i]))
+                    pose1 = (int(self._column['B_1_X'][i]+width/2), int(self._column['B_1_Y'][i]))
+                    pose2 = (int(self._column['B_2_X'][i]+width/2), int(self._column['B_2_Y'][i]))
+                    pose3 = (int(self._column['B_3_X'][i]+width/2), int(self._column['B_3_Y'][i]))
+                    pose4 = (int(self._column['B_4_X'][i]+width/2), int(self._column['B_4_Y'][i]))
+                    pose5 = (int(self._column['B_5_X'][i]+width/2), int(self._column['B_5_Y'][i]))
+                    pose6 = (int(self._column['B_6_X'][i]+width/2), int(self._column['B_6_Y'][i]))
+                    pose7 = (int(self._column['B_7_X'][i]+width/2), int(self._column['B_7_Y'][i]))
+                    pose8 = (int(self._column['B_8_X'][i]+width/2), int(self._column['B_8_Y'][i]))
+                    pose9 = (int(self._column['B_9_X'][i]+width/2), int(self._column['B_9_Y'][i]))
+                    pose10 = (int(self._column['B_10_X'][i]+width/2), int(self._column['B_10_Y'][i]))
+                    pose11 = (int(self._column['B_11_X'][i]+width/2), int(self._column['B_11_Y'][i]))
+                    pose12 = (int(self._column['B_12_X'][i]+width/2), int(self._column['B_12_Y'][i]))
+                    pose13 = (int(self._column['B_13_X'][i]+width/2), int(self._column['B_13_Y'][i]))
+                    pose14 = (int(self._column['B_14_X'][i]+width/2), int(self._column['B_14_Y'][i]))
+                    pose15 = (int(self._column['B_15_X'][i]+width/2), int(self._column['B_15_Y'][i]))
+                    pose16 = (int(self._column['B_16_X'][i]+width/2), int(self._column['B_16_Y'][i]))
+                    pose17 = (int(self._column['B_17_X'][i]+width/2), int(self._column['B_17_Y'][i]))
 
                 neckangle = self.CalNeckAngle(framenum=i)
                 if self._orientation[i]=="left" or self._orientation[i]=="right":
@@ -2889,6 +2942,8 @@ class AngleCalculation:
                 else:
                     rightelbowcolor = (0, 0, 255)
 
+                legcolor=(0,150,0)
+
 
                 if 0 not in pose0 and 0 not in pose1: self._column['image'][i] = cv2.line(img, pose0, pose1, neckcolor,
                                                                                           thickness)
@@ -2920,13 +2975,13 @@ class AngleCalculation:
                                                                                            #thickness)
                 if 0 not in pose5 and 0 not in pose11: self._column['image'][i] = cv2.line(img, pose5, pose11, backcolor,
                                                                                            thickness)
-                if 0 not in pose8 and 0 not in pose9: self._column['image'][i] = cv2.line(img, pose8, pose9, color,
+                if 0 not in pose8 and 0 not in pose9: self._column['image'][i] = cv2.line(img, pose8, pose9, legcolor,
                                                                                           thickness)
-                if 0 not in pose9 and 0 not in pose10: self._column['image'][i] = cv2.line(img, pose9, pose10, color,
+                if 0 not in pose9 and 0 not in pose10: self._column['image'][i] = cv2.line(img, pose9, pose10, legcolor,
                                                                                            thickness)
-                if 0 not in pose11 and 0 not in pose12: self._column['image'][i] = cv2.line(img, pose11, pose12, color,
+                if 0 not in pose11 and 0 not in pose12: self._column['image'][i] = cv2.line(img, pose11, pose12, legcolor,
                                                                                             thickness)
-                if 0 not in pose12 and 0 not in pose13: self._column['image'][i] = cv2.line(img, pose12, pose13, color,
+                if 0 not in pose12 and 0 not in pose13: self._column['image'][i] = cv2.line(img, pose12, pose13, legcolor,
                                                                                             thickness)
 
                 i = i + 1
@@ -2934,7 +2989,7 @@ class AngleCalculation:
         return self._column['image']
 
     #######################################################################################################################
-    def DrawNeckAngle(self, framenum=0, position=(20, 50), color=(255, 100, 0), thickness=2):
+    def DrawNeckAngle(self, framenum=0, position=(1, 50), color=(255, 100, 0), thickness=2):
         if framenum == 0 and self._column['image'] != []:
             i = 0
             while i < self._framenumber:
@@ -2975,7 +3030,7 @@ class AngleCalculation:
 
         return self._column['image']
 
-    def DrawLSAngle(self, framenum=0, position=(20, 80), color=(255, 100, 0), thickness=2):
+    def DrawLSAngle(self, framenum=0, position=(1, 80), color=(255, 100, 0), thickness=2):
         if framenum == 0 and self._column['image'] != []:
             i = 0
             while i < self._framenumber:
@@ -3038,7 +3093,7 @@ class AngleCalculation:
 
         return self._column['image']
 
-    def DrawRSAngle(self, framenum=0, position=(20, 110), color=(255, 100, 0), thickness=2):
+    def DrawRSAngle(self, framenum=0, position=(1, 110), color=(255, 100, 0), thickness=2):
         if framenum == 0 and self._column['image'] != []:
             i = 0
             while i < self._framenumber:
@@ -3101,7 +3156,7 @@ class AngleCalculation:
 
         return self._column['image']
 
-    def DrawBackAngle(self, framenum=0, position=(20, 140), color=(255, 100, 0), thickness=2):
+    def DrawBackAngle(self, framenum=0, position=(1, 140), color=(255, 100, 0), thickness=2):
         if framenum == 0 and self._column['image'] != []:
             i = 0
             while i < self._framenumber:
@@ -3155,7 +3210,7 @@ class AngleCalculation:
 
         return self._column['image']
 
-    def DrawLEAngle(self, framenum=0, position=(20, 170), color=(255, 100, 0), thickness=2):
+    def DrawLEAngle(self, framenum=0, position=(1, 170), color=(255, 100, 0), thickness=2):
         if framenum == 0 and self._column['image'] != []:
             i = 0
             while i < self._framenumber:
@@ -3180,7 +3235,7 @@ class AngleCalculation:
 
         return self._column['image']
 
-    def DrawREAngle(self, framenum=0, position=(20, 200), color=(255, 100, 0), thickness=2):
+    def DrawREAngle(self, framenum=0, position=(1, 200), color=(255, 100, 0), thickness=2):
         if framenum == 0 and self._column['image'] != []:
             i = 0
             while i < self._framenumber:
@@ -3205,7 +3260,7 @@ class AngleCalculation:
 
         return self._column['image']
 
-    def DrawLLAngle(self, framenum=0, position=(20, 350), color=(255, 0, 0), thickness=2):
+    def DrawLLAngle(self, framenum=0, position=(1, 350), color=(0, 150, 0), thickness=2):
         if framenum == 0 and self._column['image'] != []:
             i = 0
             while i < self._framenumber:
@@ -3217,7 +3272,7 @@ class AngleCalculation:
 
                 i=i+1
 
-    def DrawRLAngle(self, framenum=0, position=(20, 380), color=(255, 0, 0), thickness=2):
+    def DrawRLAngle(self, framenum=0, position=(1, 380), color=(0, 150, 0), thickness=2):
         if framenum == 0 and self._column['image'] != []:
             i = 0
             while i < self._framenumber:
@@ -3230,7 +3285,7 @@ class AngleCalculation:
                 i=i+1
 
 
-    def action(self,framenum=-1, position=(20,410),color=(255, 0, 0), thickness=2):
+    def action(self,framenum=-1, position=(1,410),color=(255, 0, 0), thickness=2):
         self._column['action']=[]
         if framenum==-1 and self._column['image'] != []:
             i=0
@@ -3532,16 +3587,16 @@ class AngleCalculation:
                 img = cv2.rectangle(img, (GridPoint11), (GridPoint16), color, 1)
 
                 if lh != 0:
-                    cv2.putText(img, 'Left Hand Grid:' +str(lh), (20, 230),
+                    cv2.putText(img, 'Left Hand Grid:' +str(lh), (1, 230),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 150, 0), 2)
                 else:
-                    cv2.putText(img, 'Left Hand Grid: N/A', (20, 230),
+                    cv2.putText(img, 'Left Hand Grid: N/A', (1, 230),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 150, 0), 2)
                 if rh != 0:
-                    cv2.putText(img, 'Right Hand Grid:' +str(rh), (20, 260),
+                    cv2.putText(img, 'Right Hand Grid:' +str(rh), (1, 260),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 150, 0), 2)
                 else:
-                    cv2.putText(img, 'Right Hand Grid: N/A', (20, 260),
+                    cv2.putText(img, 'Right Hand Grid: N/A', (1, 260),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 150, 0), 2)
 
                 self._column['image'][i] = img
@@ -3942,7 +3997,7 @@ class AngleCalculation:
         print('***************out  savesqldata')
         conn.close()
 
-    def savehandling(self, host, port, user, password, db, table_name, video_name, video_path):
+    def savehandling(self, host, port, user, password, db, table_name, video_name):
         import uuid
         self.Ninegridboxhandposition()
         conn = pymysql.connect(host=host, port=port, user=user, password=password,
@@ -3972,7 +4027,7 @@ class AngleCalculation:
 
 
         for t in range(len(writedic['assessment_id'])):
-            fps=self.Getfps(video_path)
+            fps=10
             startframe=int(writedic['start_time'][t].total_seconds()*fps)
             endframe=int(writedic['end_time'][t].total_seconds()*fps)-1
             if endframe >= self._framenumber:
@@ -4097,10 +4152,12 @@ class AngleCalculation:
 
     def ImagetoVideo(self, output, imgext='jpg', fps=10.0):
         import skvideo.io
-        print("AngleCalculation.ImagetoVideo to output {}".format(output))
         writer = skvideo.io.FFmpegWriter(output, inputdict={
             '-r': '10'}, outputdict={'-b': '300000000'})
+        
         for img in self._column['image']:
+            if img is None:
+                continue
             img = img[:, :, ::-1]
             # data = np.asarray(img)
             # img = Image.fromarray(np.roll(data, 1, axis=-1))
@@ -4141,8 +4198,6 @@ class AngleCalculation:
         print("The output video is {}".format(output))
 
     def outputimage(self,dirpath):
-
-        print("AngleCalculation.outputimage to {}".format(dirpath))
         flag=0
         x=[]
         counter1=0
@@ -4172,9 +4227,8 @@ class AngleCalculation:
 
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
-        print('outputimage.printing array x:')
+            
         print(x)
-        print('outputimage.printing len of x:')
         print(len(x))
         u=3
         flag2=0
@@ -4185,7 +4239,6 @@ class AngleCalculation:
             
         for i in range(0,u):
             cv2.imwrite("%s/image%d.jpg"%(dirpath,i),x[i])
-        print('outputimage()finished.')
 
 
     def neckstatus(self):
@@ -4608,6 +4661,16 @@ class AngleCalculation:
         u['repetitionrange5'] = repetition5
 
         return u
+
+    def getimagereso(self,filepath):
+
+        vid = cv2.VideoCapture(filepath)
+        height = vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        width = vid.get(cv2.CAP_PROP_FRAME_WIDTH)
+        reso=[height,width]
+
+
+        return reso
 
 
 
